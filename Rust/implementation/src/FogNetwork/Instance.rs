@@ -1,5 +1,6 @@
 use crate::FogNetwork::Nodes::FGN;
 
+// Instance of Fog Network
 pub struct Instance {
     number_of_parameters: usize,
     algo_params: Vec<Parameter>,
@@ -7,6 +8,7 @@ pub struct Instance {
 }
 
 
+// Structure of parameter used in algo
 #[derive(Debug)]
 pub struct Parameter {
     id: String,
@@ -15,6 +17,7 @@ pub struct Parameter {
 }
 
 impl Parameter {
+    // Constructor
     pub fn new(
         id: String, weight: f32, to_be_maximized: bool
     ) -> Self {
@@ -26,6 +29,7 @@ impl Parameter {
 }
 
 impl Instance {
+    // Empty Constructor
     pub fn new_empty(algo_params: Vec<Parameter>) -> Instance {
         Instance {
             number_of_parameters: algo_params.len(),
@@ -34,6 +38,7 @@ impl Instance {
         }
     }
 
+    // Constructor
     pub fn new(algo_params: Vec<Parameter>, fgns: Vec<FGN>) -> Instance {
         Instance {
             number_of_parameters: algo_params.len(),
@@ -42,6 +47,7 @@ impl Instance {
         }
     }
 
+    // Function to add new node to network
     #[allow(non_snake_case)]
     pub fn add_FGN(
         &mut self, new_fgn: FGN
@@ -58,6 +64,8 @@ impl Instance {
         Ok(())
     }
 
+    // TOPSIS algo implementation for FON selection
+    // Returns reference to FGN selected as FON
     #[allow(non_snake_case)]
     pub fn TOPSIS(&self) -> Result<&FGN, String> {
         let mut V: Vec<Vec<f32>>;
