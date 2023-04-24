@@ -49,9 +49,7 @@ impl Instance {
 
     // Function to add new node to network
     #[allow(non_snake_case)]
-    pub fn add_FGN(
-        &mut self, new_fgn: FGN
-    ) -> Result<() , String> {
+    pub fn add_FGN(&mut self, new_fgn: FGN) -> Result<() , String> {
         for fgn in self.fgns.iter() {
             if fgn.get_id() == new_fgn.get_id() {
                 {
@@ -62,6 +60,16 @@ impl Instance {
         }
         self.fgns.push(new_fgn);
         Ok(())
+    }
+
+    #[allow(non_snake_case)]
+    pub fn get_FGN(&mut self, fgn_id: String) -> Result<&mut FGN , String> {
+        for fgn in self.fgns.iter_mut() {
+            if *fgn.get_id() == fgn_id {
+                return Ok(fgn);
+            }
+        }
+        Err(format!("FGN with id \"{}\" does not exist.", fgn_id))
     }
 
     // TOPSIS algo implementation for FON selection
