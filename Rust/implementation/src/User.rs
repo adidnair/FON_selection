@@ -1,4 +1,5 @@
 use crate::FogNetwork::Nodes::FGN;
+use crate::Constants;
 use std::fmt;
 
 pub struct Application {
@@ -8,35 +9,28 @@ pub struct Application {
 
 #[derive(Clone, Debug)]
 pub struct ApplicationParameter {
-    pub param_type: ApplicationParameterType,
+    pub param_type: Constants::Application::ParameterType,
     pub val: f32,
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum ApplicationParameterType {
-    AccessRate,
-    RequiredResources,
-    ProcessingTime,
-}
-
 impl ApplicationParameter {
-    pub fn new(param_type: ApplicationParameterType, val: f32) -> Self {
-        Self { param_type, val, }
+    pub fn new(param_type: Constants::Application::ParameterType, val: f32) -> Self {
+        Self { val, param_type }
     }
 
+    // pub fn fuzzy_set_index(&self) -> Result<usize, String> {
+    //     for i in 0..self.fuzzy_sets.0.len() {
+    //         if self.val > self.fuzzy_sets.1[i]
+    //         && self.val < self.fuzzy_sets.1[i+1] {
+    //             return Ok(i);
+    //         }
+    //     }
+    //     Err(String::from("Parameter value is out of bounds \
+    //         even after normalization."))
+    // }
 }
 
-impl ApplicationParameterType {
-    fn get_fuzzy_set(&self) {
-        match self {
-            Self::AccessRate => {},
-            Self::RequiredResources => {},
-            Self::ProcessingTime => {},
-        }
-    }
-}
-
-impl fmt::Display for ApplicationParameterType {
+impl fmt::Display for Constants::Application::ParameterType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AccessRate => {write!(f, "AccessRate")},

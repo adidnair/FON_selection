@@ -1,12 +1,11 @@
 use crate::FogNetwork::Nodes::FGN;
 
-// Instance of Fog Network
+// Instance of FONS Algorithm
 pub struct Instance {
     number_of_parameters: usize,
     algo_params: Vec<Parameter>,
     fgns: Vec<FGN>,
 }
-
 
 // Structure of parameter used in algo
 #[derive(Debug)]
@@ -181,4 +180,4 @@ impl Instance {
 
         Ok(&self.fgns[FON_index])
     }
-}
+}   

@@ -1,6 +1,9 @@
 use std::collections::HashMap;
+use crate::Constants;
+use crate::User::ApplicationParameter;
 
-use crate::User::{ApplicationParameter, ApplicationParameterType};
+const NONE_APP_PARAM_WORKAROUND: Option<ApplicationParameter> = None;
+const VEC_ARRAY_WORKAROUND: Vec<usize> = Vec::new();
 
 // Structure of property of FGN
 pub struct FGNProperty {
@@ -9,41 +12,32 @@ pub struct FGNProperty {
 }
 
 pub struct ApplicationParameterTemplate {
-    min: f32,
-    max: f32,
-}
-
-impl ApplicationParameterTemplate {
-    pub fn new(min: f32, max: f32) -> Self {
-        Self { min, max }
-    }
+    pub min: f32,
+    pub max: f32,
 }
 
 pub struct ERU {
-    parameters: Vec<ApplicationParameter>,
-    // fuzzified_parameters = 
+    parameters: [Option<ApplicationParameter>; Constants::ERU::ROE_EXPECTED_PARAMS.len()],
+    ROE_fuzzy_rules: [[[usize; 3]; 3]; 3],
 }
 
 // Structure of FGN
 pub struct FGN {
     id: String,
     properties: HashMap<String, f32>,
-    app_param_templates: HashMap<ApplicationParameterType,
-                                 ApplicationParameterTemplate>,
     // Expectation Rating Unit
     ERU: ERU,
 }
 
 impl FGN {
-    pub fn new(
-        id: String, app_param_templates: HashMap<ApplicationParameterType,
-                                                 ApplicationParameterTemplate>
-    ) -> Self {
+    pub fn new(id: String) -> Self {
         Self {
             id,
             properties: HashMap::new(),
-            app_param_templates,
-            ERU: ERU { parameters: Vec::new() },
+            ERU: ERU {
+                parameters: [NONE_APP_PARAM_WORKAROUND; Constants::ERU::ROE_EXPECTED_PARAMS.len()],
+                ROE_fuzzy_rules: Constants::ERU::ROE_FUZZY_RULES,
+            },
         }
     }
 
@@ -77,43 +71,93 @@ impl FGN {
         &self.id
     }
 
-    pub fn get_request(&mut self, params: Vec<ApplicationParameter>) -> Result<(), String> {
+    pub fn get_request(&mut self, params: Vec<ApplicationParameter>) -> Result<f32, String> {
         // filter parameters
-        self.ERU.parameters = params;
-        println!("Param values before filtering: ");
-        dbg!(&self.ERU.parameters);
-        self.ERU.parameters.retain(|param| {
-            let exists = self.app_param_templates.contains_key(&param.param_type);
-            if !exists {
-                println!("Parameter \"{}\" is not recognized by the \
-                    Fog Network. Omitting...", param.param_type);
+        for (i, param) in params.iter().enumerate() {
+            for expected_type in Constants::ERU::ROE_EXPECTED_PARAMS {
+                if param.param_type == expected_type {
+                    if param.val >= Constants::ERU::ROE_PARAM_TEMPLATES[i].min
+                    && param.val <= Constants::ERU::ROE_PARAM_TEMPLATES[i].max {
+                        self.ERU.parameters[i] = Some(param.clone());
+                    } else {
+                        println!("Value of parameter \"{}\" is out of the bounds \
+                            defined by the Fog Network. Omitting...", param.param_type);
+                    }
+                    continue;
+                }
+                // println!("Parameter of type \"{}\" not required. Omitting...", param.param_type);
             }
-            let template = self.app_param_templates.get(&param.param_type).unwrap();
-            let in_bounds = param.val >= template.min && param.val <= template.max;
-            if !in_bounds {
-                println!("Value of parameter \"{}\" is out of the bounds \
-                    defined by the Fog Network. Omitting...", param.param_type);
-            }
-            exists && in_bounds
-        });
+        }
 
+        self.ERU.ROE()
+    }
+}
+
+impl ERU {
+    fn get_membership_values(&self) -> [
+        [f32; Constants::ERU::ROE_FUZZY_SETS[0].len()];
+        Constants::ERU::ROE_FUZZY_SETS.len()
+    ] {
+        [
+            Constants::ERU::ProcessingTimeMembershipFunction(self.parameters[0].as_ref().unwrap().val),
+            Constants::ERU::AccessRateMembershipFunction(self.parameters[1].as_ref().unwrap().val),
+            Constants::ERU::RequiredResourcesMembershipFunction(self.parameters[3].as_ref().unwrap().val),
+        ]
+    }
+
+
+    pub fn ROE(&mut self) -> Result<f32, String> {
+        for param in &self.parameters {
+            if param.is_none() {
+                return Err(String::from("All required parameters were not supplied."));
+            }
+        }
         println!("Param values before normalization: ");
-        dbg!(&self.ERU.parameters);
+        dbg!(&self.parameters);
         // normalize parameters
-        for param in self.ERU.parameters.iter_mut() {
-            let template = self.app_param_templates.get(&param.param_type).unwrap();
-            param.val = 2.0f32 * (param.val - template.min)
-                / (template.max - template.min);
+        for (i, param) in self.parameters.iter_mut().enumerate() {
+            if let Some(ref mut raw_param) = param {
+                raw_param.val = 2.0 * (raw_param.val - Constants::ERU::ROE_PARAM_TEMPLATES[i].min)
+                    / (Constants::ERU::ROE_PARAM_TEMPLATES[i].max - Constants::ERU::ROE_PARAM_TEMPLATES[i].min) - 1.0;
+            }
         }
         println!("Param values after normalization: ");
-        dbg!(&self.ERU.parameters);
+        dbg!(&self.parameters);
 
-        // fuzzification
-        // TODO: implement membership function
+        // 1. calculate membership function for each value of each parameter
+        let membership_values = self.get_membership_values();
 
+        let mut positive_indices = [VEC_ARRAY_WORKAROUND; Constants::ERU::ROE_FUZZY_SETS.len()];
 
-        // fuzzy inference
-        // defuzzification
-        Ok(())
+        for (i, arr) in membership_values.iter().enumerate() {
+            for (j, &val) in arr.iter().enumerate() {
+                if val != 0.0 {
+                    positive_indices[i].push(j);
+                }
+            }
+        }
+        let positive_indices = positive_indices;
+
+        let mut ROE_numerator: f32 = 0.0;
+        let mut ROE_denominator: f32 = 0.0;
+
+        for &i in &positive_indices[0] {
+            for &j in &positive_indices[1] {
+                for &k in &positive_indices[2] {
+                    let fuzzy_output_membership_value = f32::max(
+                        membership_values[0][i],
+                        f32::max(
+                            membership_values[1][j],
+                            membership_values[2][k]
+                        )
+                    );
+                    ROE_numerator += fuzzy_output_membership_value
+                    * Constants::ERU::ROE_SINGLETON_VALUES[Constants::ERU::ROE_FUZZY_RULES[i][j][k]];
+                    ROE_denominator += fuzzy_output_membership_value;
+                }
+            }
+        }
+
+        Ok(ROE_numerator/ROE_denominator)
     }
 }
