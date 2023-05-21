@@ -1,5 +1,5 @@
 use FogNetwork::{Instance::*, Nodes::FGN};
-use User::{Application, ApplicationParameter};
+use User::{Application, ExpectationMetricParameter};
 
 #[allow(non_snake_case)]
 mod FogNetwork;
@@ -40,12 +40,12 @@ fn main() -> Result<(), String> {
     let test_app = Application::new(
         String::from("test_app"),
         vec![
-            ApplicationParameter::new(
-                Constants::Application::ParameterType::AccessRate, 2.7),
-            ApplicationParameter::new(
-                Constants::Application::ParameterType::RequiredResources, 3.4),
-            ApplicationParameter::new(
-                Constants::Application::ParameterType::ProcessingTime, 1.2),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 2.7),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 3.4),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 1.2),
         ],
     );
 
@@ -53,7 +53,7 @@ fn main() -> Result<(), String> {
     //     &mut new_instance.get_FGN(String::from("Test_FGN_1")).unwrap());
     // let request_result2 = test_app.send_request(
     //     &mut new_instance.get_FGN(String::from("Test_FGN_does_not_exist")).unwrap());
-    let request_result3 = test_app.send_request(
+    let request_result3 = test_app.send_placement_request(
         &mut new_instance.get_FGN(String::from("Test_FGN_2")).unwrap());
 
     // dbg!(&request_result1);
