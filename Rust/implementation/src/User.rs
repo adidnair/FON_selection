@@ -30,14 +30,4 @@ impl Application {
             id: self.id.clone(), params: self.parameters.clone()
         })
     }
-
-    pub fn send_placement_requests(&self, fgns: Vec<&mut FGN>) -> Result<(), String> {
-        for fgn in fgns {
-            match self.send_placement_request(fgn) {
-                Err(err)    => {return Err(err)},
-                Ok(_)       => {}
-            }
-        }
-        Ok(())
-    }
 }

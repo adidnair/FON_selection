@@ -139,8 +139,15 @@ impl FGN {
                 self.CSU.CSS(fcn.params.clone()).unwrap()
             }).collect();
 
-        for i in ROEs {println!("{:?}", i);}
-        for i in CSSs {println!("{:?}", i);}
+        for (i, app) in self.application_requests.iter().enumerate() {
+            println!("Application: {:?}\n\t({:?}, {:?}, {:?}), {:?}",
+            app.id, app.params[0].val, app.params[1].val, app.params[2].val, ROEs[i]);
+        }
+        println!("");
+        for (i, fcn) in self.available_fcns.iter().enumerate() {
+            println!("FCN: {:?}\n\t({:?}, {:?}, {:?}), {:?}",
+            fcn.id, fcn.params[0].val, fcn.params[1].val, fcn.params[2].val, CSSs[i]);
+        }
 
         Ok(())
     }
@@ -168,8 +175,8 @@ impl ERU {
                     && param.val <= Constants::ERU::ROE_PARAM_TEMPLATES[i].max {
                         self.parameters[i] = Some(param.clone());
                     } else {
-                        println!("Value of parameter \"{}\" is out of the bounds \
-                            defined by the Fog Network. Omitting...", param.param_type);
+                        println!("Value of parameter \"{} ({:?})\" is out of the bounds \
+                            defined by the Fog Network. Omitting...", param.param_type, param.val);
                     }
                     continue;
                 }
@@ -189,26 +196,17 @@ impl ERU {
             }
         }
 
+        // println!("({:?}, {:?}, {:?})", self.parameters[0].as_ref().unwrap().val, self.parameters[1].as_ref().unwrap().val, self.parameters[2].as_ref().unwrap().val);
+
         // 1. calculate membership function for each value of each parameter
         let membership_values = self.get_membership_values();
-
-        let mut positive_indices = [VEC_ARRAY_WORKAROUND; Constants::ERU::ROE_FUZZY_SETS.len()];
-
-        for (i, arr) in membership_values.iter().enumerate() {
-            for (j, &val) in arr.iter().enumerate() {
-                if val != 0.0 {
-                    positive_indices[i].push(j);
-                }
-            }
-        }
-        let positive_indices = positive_indices;
 
         let mut ROE_numerator: f32 = 0.0;
         let mut ROE_denominator: f32 = 0.0;
 
-        for &i in &positive_indices[0] {
-            for &j in &positive_indices[1] {
-                for &k in &positive_indices[2] {
+        for i in 0..3 {
+            for j in 0..3 {
+                for k in 0..3 {
                     let fuzzy_output_membership_value = f32::max(
                         membership_values[0][i],
                         f32::max(
@@ -217,13 +215,13 @@ impl ERU {
                         )
                     );
                     ROE_numerator += fuzzy_output_membership_value
-                    * Constants::ERU::ROE_SINGLETON_VALUES[Constants::ERU::ROE_FUZZY_RULES[i][j][k]];
+                    * Constants::ERU::ROE_SINGLETON_VALUES[Constants::ERU::ROE_FUZZY_RULES[k][i][j]];
                     ROE_denominator += fuzzy_output_membership_value;
                 }
             }
         }
 
-        Ok(ROE_numerator/ROE_denominator)
+        Ok(ROE_numerator / ROE_denominator)
     }
 }
 
@@ -272,23 +270,12 @@ impl CSU {
         // 1. calculate membership function for each value of each parameter
         let membership_values = self.get_membership_values();
 
-        let mut positive_indices = [VEC_ARRAY_WORKAROUND; Constants::CSU::CSS_FUZZY_SETS.len()];
-
-        for (i, arr) in membership_values.iter().enumerate() {
-            for (j, &val) in arr.iter().enumerate() {
-                if val != 0.0 {
-                    positive_indices[i].push(j);
-                }
-            }
-        }
-        let positive_indices = positive_indices;
-
         let mut CSS_numerator: f32 = 0.0;
         let mut CSS_denominator: f32 = 0.0;
 
-        for &i in &positive_indices[0] {
-            for &j in &positive_indices[1] {
-                for &k in &positive_indices[2] {
+        for i in 0..3 {
+            for j in 0..3 {
+                for k in 0..3 {
                     let fuzzy_output_membership_value = f32::min(
                         membership_values[0][i],
                         f32::min(
@@ -297,7 +284,7 @@ impl CSU {
                         )
                     );
                     CSS_numerator += fuzzy_output_membership_value
-                    * Constants::CSU::CSS_SINGLETON_VALUES[Constants::CSU::CSS_FUZZY_RULES[i][j][k]];
+                    * Constants::CSU::CSS_SINGLETON_VALUES[Constants::CSU::CSS_FUZZY_RULES[k][i][j]];
                     CSS_denominator += fuzzy_output_membership_value;
                 }
             }

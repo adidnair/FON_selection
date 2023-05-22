@@ -37,25 +37,70 @@ fn main() -> Result<(), String> {
         FGN::new(String::from("Test_FGN_2"))
     )?;
 
-    let test_app = Application::new(
-        String::from("test_app"),
+    let test_fgn = new_instance.get_FGN(String::from("Test_FGN_2")).unwrap();
+
+    let _ = Application::new(
+        String::from("app1"),
         vec![
             ExpectationMetricParameter::new(
-                Constants::Application::ExpectationMetricParameterType::AccessRate, 2.7),
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 2.0),
             ExpectationMetricParameter::new(
-                Constants::Application::ExpectationMetricParameterType::RequiredResources, 3.4),
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 2.0),
             ExpectationMetricParameter::new(
-                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 1.2),
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 120.0),
         ],
-    );
+    ).send_placement_request(test_fgn);
+    let _ = Application::new(
+        String::from("app2"),
+        vec![
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 5.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 5.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 70.0),
+        ],
+    ).send_placement_request(test_fgn);
+    let _ = Application::new(
+        String::from("app3"),
+        vec![
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 3.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 3.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 90.0),
+        ],
+    ).send_placement_request(test_fgn);
+    let _ = Application::new(
+        String::from("app4"),
+        vec![
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 7.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 8.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 60.0),
+        ],
+    ).send_placement_request(test_fgn);
+    let _ = Application::new(
+        String::from("app5"),
+        vec![
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::AccessRate, 8.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::RequiredResources, 3.0),
+            ExpectationMetricParameter::new(
+                Constants::Application::ExpectationMetricParameterType::ProcessingTime, 50.0),
+        ],
+    ).send_placement_request(test_fgn);
 
     // let request_result1 = test_app.send_request(
     //     &mut new_instance.get_FGN(String::from("Test_FGN_1")).unwrap());
     // let request_result2 = test_app.send_request(
     //     &mut new_instance.get_FGN(String::from("Test_FGN_does_not_exist")).unwrap());
-    let test_fgn = new_instance.get_FGN(String::from("Test_FGN_2")).unwrap();
-    let _request_result3 = test_app.send_placement_request(
-        test_fgn);
+    // let _request_result3 = test_app.send_placement_request(
+    //     test_fgn);
 
     // dbg!(&request_result1);
     // dbg!(&request_result2);
@@ -67,11 +112,11 @@ fn main() -> Result<(), String> {
             id: String::from("fcn1"),
             params: vec![
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 1.2),
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 100.0),
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 3.1),
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 3.0),
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 2.1),
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 20.0),
             ]
         },
     );
@@ -80,11 +125,76 @@ fn main() -> Result<(), String> {
             id: String::from("fcn2"),
             params: vec![
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 3.2),
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 100.0),
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 0.7),
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 2.0),
                 StatusMetricParameter::new(
-                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 1.4),
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 20.0),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn3"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 200.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 4.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 40.0),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn4"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 300.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 5.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 30.0),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn5"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 400.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 6.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 50.0),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn6"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 500.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 8.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 70.0),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn7"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 500.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 6.0),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 60.0),
             ]
         },
     );

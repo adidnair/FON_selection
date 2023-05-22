@@ -7,19 +7,19 @@ pub mod ERU {
                                             ROE_FUZZY_OUTPUT_SET.len()];
                                             ROE_FUZZY_OUTPUT_SET.len()] = [
         [
+            [1, 1, 0],
+            [1, 0, 0],
             [0, 0, 0],
-            [0, 0, 1],
-            [0, 1, 1],
         ],
         [
-            [0, 0, 1],
-            [0, 1, 1],
             [1, 1, 1],
+            [1, 1, 0],
+            [1, 0, 0],
         ],
         [
-            [0, 1, 1],
+            [2, 1, 1],
             [1, 1, 1],
-            [1, 1, 2],
+            [1, 1, 0],
         ],
     ];
 
@@ -30,9 +30,9 @@ pub mod ERU {
     ];
 
     pub const ROE_PARAM_TEMPLATES: [ExpectationMetricParameterTemplate; ROE_EXPECTED_PARAMS.len()] = [
-        ExpectationMetricParameterTemplate{min: 0.0, max: 4.0},
-        ExpectationMetricParameterTemplate{min: 0.0, max: 4.0},
-        ExpectationMetricParameterTemplate{min: 0.0, max: 4.0},
+        ExpectationMetricParameterTemplate{min: 2.0, max: 10.0},
+        ExpectationMetricParameterTemplate{min: 1.0, max: 8.0},
+        ExpectationMetricParameterTemplate{min: 30.0, max: 120.0},
     ];
 
     pub const ROE_FUZZY_SETS: [[&'static str; 3]; ROE_EXPECTED_PARAMS.len()] = [
@@ -146,19 +146,19 @@ pub mod CSU {
                                             CSS_FUZZY_OUTPUT_SET.len()];
                                             CSS_FUZZY_OUTPUT_SET.len()] = [
         [
-            [0, 1, 1],
-            [1, 1, 1],
-            [1, 1, 2],
-        ],
-        [
-            [1, 1, 1],
-            [1, 1, 2],
-            [1, 2, 2],
-        ],
-        [
-            [1, 1, 2],
-            [1, 2, 2],
+            [2, 1, 1],
+            [2, 2, 1],
             [2, 2, 2],
+        ],
+        [
+            [1, 1, 1],
+            [2, 1, 1],
+            [2, 2, 1],
+        ],
+        [
+            [1, 1, 0],
+            [1, 1, 1],
+            [2, 1, 1],
         ],
     ];
 
@@ -169,9 +169,9 @@ pub mod CSU {
     ];
 
     pub const CSS_PARAM_TEMPLATES: [StatusMetricParameterTemplate; CSS_EXPECTED_PARAMS.len()] = [
-        StatusMetricParameterTemplate{min: 0.0, max: 4.0},
-        StatusMetricParameterTemplate{min: 0.0, max: 4.0},
-        StatusMetricParameterTemplate{min: 0.0, max: 4.0},
+        StatusMetricParameterTemplate{min: 100.0, max: 600.0},
+        StatusMetricParameterTemplate{min: 1.0, max: 10.0},
+        StatusMetricParameterTemplate{min: 10.0, max: 70.0},
     ];
 
     pub const CSS_FUZZY_SETS: [[&'static str; 3]; CSS_EXPECTED_PARAMS.len()] = [
