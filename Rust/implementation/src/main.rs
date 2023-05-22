@@ -199,7 +199,8 @@ fn main() -> Result<(), String> {
         },
     );
 
-    let _ = test_fgn.application_placement();
+    let mapping = test_fgn.application_placement().unwrap();
+    println!("{}", mapping);
 
     Ok(())
 }

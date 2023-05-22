@@ -125,31 +125,49 @@ impl FGN {
         Ok(())
     }
 
-    pub fn application_placement(&mut self) -> Result<(), String> {
+    pub fn application_placement(&mut self) -> Result<String, String> {
         if self.application_requests.len() >= self.available_fcns.len() {
             return Err(String::from("Not enough FCNs to map applications to."));
         }
 
-        let ROEs: Vec<f32> = self.application_requests.iter()
+        let mut ROEs: Vec<f32> = self.application_requests.iter()
             .map(|app| {
                 self.ERU.ROE(app.params.clone()).unwrap()
             }).collect();
-        let CSSs: Vec<f32> = self.available_fcns.iter()
+        let mut CSSs: Vec<f32> = self.available_fcns.iter()
             .map(|fcn| {
                 self.CSU.CSS(fcn.params.clone()).unwrap()
             }).collect();
 
-        for (i, app) in self.application_requests.iter().enumerate() {
-            println!("Application: {:?}\n\t({:?}, {:?}, {:?}), {:?}",
-            app.id, app.params[0].val, app.params[1].val, app.params[2].val, ROEs[i]);
-        }
-        println!("");
-        for (i, fcn) in self.available_fcns.iter().enumerate() {
-            println!("FCN: {:?}\n\t({:?}, {:?}, {:?}), {:?}",
-            fcn.id, fcn.params[0].val, fcn.params[1].val, fcn.params[2].val, CSSs[i]);
+        let mut ROE_indices: Vec<usize> = (0..ROEs.len()).collect();
+        let mut CSS_indices: Vec<usize> = (0..CSSs.len()).collect();
+
+        for i in 0..ROE_indices.len() {
+            let mut j = i;
+            while j > 0 && ROEs[j-1] < ROEs[j] {
+                ROEs.swap(j, j-1);
+                ROE_indices.swap(j, j-1);
+                j -= 1;
+            }
         }
 
-        Ok(())
+        for i in 0..CSS_indices.len() {
+            let mut j = i;
+            while j > 0 && CSSs[j-1] < CSSs[j] {
+                CSSs.swap(j, j-1);
+                CSS_indices.swap(j, j-1);
+                j -= 1;
+            }
+        }
+
+        let mappings = ROE_indices.iter().enumerate().map(|(i, &roe)| {
+            self.application_requests[roe].id.clone() + &String::from(" - ")
+                + &self.available_fcns[CSS_indices[i]].id
+        }).collect::<Vec<String>>().join("\n");
+
+        Ok(String::from(
+            String::from("Mapping: \n") + &mappings
+        ))
     }
 }
 
