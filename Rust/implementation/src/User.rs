@@ -1,4 +1,4 @@
-use crate::FogNetwork::Nodes::FGN;
+use crate::FogNetwork::Nodes::{FGN, ApplicationRequest};
 use crate::Constants;
 
 pub struct Application {
@@ -25,8 +25,10 @@ impl Application {
         Self { id, parameters, }
     }
 
-     pub fn send_placement_request(&self, fgn: &mut FGN) -> Result<f32, String> {
-        fgn.get_application_request(self.parameters.clone())
+     pub fn send_placement_request(&self, fgn: &mut FGN) -> Result<(), String> {
+        fgn.get_application_request(ApplicationRequest {
+            id: self.id.clone(), params: self.parameters.clone()
+        })
     }
 
     pub fn send_placement_requests(&self, fgns: Vec<&mut FGN>) -> Result<(), String> {

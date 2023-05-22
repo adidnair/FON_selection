@@ -1,4 +1,4 @@
-use FogNetwork::{Instance::*, Nodes::FGN};
+use FogNetwork::{Instance::*, Nodes::{FGN, AvailableFCN, StatusMetricParameter}};
 use User::{Application, ExpectationMetricParameter};
 
 #[allow(non_snake_case)]
@@ -53,12 +53,43 @@ fn main() -> Result<(), String> {
     //     &mut new_instance.get_FGN(String::from("Test_FGN_1")).unwrap());
     // let request_result2 = test_app.send_request(
     //     &mut new_instance.get_FGN(String::from("Test_FGN_does_not_exist")).unwrap());
-    let request_result3 = test_app.send_placement_request(
-        &mut new_instance.get_FGN(String::from("Test_FGN_2")).unwrap());
+    let test_fgn = new_instance.get_FGN(String::from("Test_FGN_2")).unwrap();
+    let _request_result3 = test_app.send_placement_request(
+        test_fgn);
 
     // dbg!(&request_result1);
     // dbg!(&request_result2);
-    dbg!(&request_result3);
+    // dbg!(&request_result3);
+    //
+
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn1"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 1.2),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 3.1),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 2.1),
+            ]
+        },
+    );
+    let _ = test_fgn.add_available_fcn(
+        AvailableFCN {
+            id: String::from("fcn2"),
+            params: vec![
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::RoundTripTime , 3.2),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ResourceAvailability , 0.7),
+                StatusMetricParameter::new(
+                    Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 1.4),
+            ]
+        },
+    );
+
+    let _ = test_fgn.application_placement();
 
     Ok(())
 }

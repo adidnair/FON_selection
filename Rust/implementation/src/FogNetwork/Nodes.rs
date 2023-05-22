@@ -44,9 +44,14 @@ impl StatusMetricParameter {
     }
 }
 
-pub struct CandidateFCN {
-    id: String,
-    params: Vec<StatusMetricParameter>
+pub struct ApplicationRequest {
+    pub id: String,
+    pub params: Vec<ExpectationMetricParameter>
+}
+
+pub struct AvailableFCN {
+    pub id: String,
+    pub params: Vec<StatusMetricParameter>
 }
 
 // Structure of FGN
@@ -54,6 +59,8 @@ pub struct FGN {
     id: String,
     properties: HashMap<String, f32>,
     // Expectation Rating Unit
+    application_requests: Vec<ApplicationRequest>,
+    available_fcns: Vec<AvailableFCN>,
     ERU: ERU,
     CSU: CSU,
 }
@@ -63,6 +70,8 @@ impl FGN {
         Self {
             id,
             properties: HashMap::new(),
+            application_requests: Vec::new(),
+            available_fcns: Vec::new(),
             ERU: ERU {
                 parameters: [NONE_APP_PARAM_WORKAROUND; Constants::ERU::ROE_EXPECTED_PARAMS.len()],
                 // ROE_fuzzy_rules: Constants::ERU::ROE_FUZZY_RULES,
@@ -104,47 +113,36 @@ impl FGN {
         &self.id
     }
 
-    fn get_candidate_fcns(&self) -> Vec<CandidateFCN> {
-        vec![
-            CandidateFCN {
-                id: String::from("fcn1"),
-                params: vec![
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::RoundTripTime , 1.2),
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::ResourceAvailability , 3.1),
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 2.1),
-                ]
-            },
-            CandidateFCN {
-                id: String::from("fcn2"),
-                params: vec![
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::RoundTripTime , 3.2),
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::ResourceAvailability , 0.7),
-                    StatusMetricParameter::new(
-                        Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 1.4),
-                ]
-            },
-        ]
+
+    pub fn get_application_request(&mut self, app_request: ApplicationRequest) -> Result<(), String> {
+        
+        self.application_requests.push(app_request);
+        Ok(())
     }
 
-    pub fn get_application_request(&mut self,
-            expectation_params: Vec<ExpectationMetricParameter>,
-        ) -> Result<f32, String> {
+    pub fn add_available_fcn(&mut self, new_fcn: AvailableFCN) -> Result<(), String> {
+        self.available_fcns.push(new_fcn);
+        Ok(())
+    }
 
-        let ROE = self.ERU.ROE(expectation_params).unwrap();
-        let candidate_fcns: Vec<CandidateFCN> = self.get_candidate_fcns();
-        let CSSs: Vec<f32> = candidate_fcns.iter()
+    pub fn application_placement(&mut self) -> Result<(), String> {
+        if self.application_requests.len() >= self.available_fcns.len() {
+            return Err(String::from("Not enough FCNs to map applications to."));
+        }
+
+        let ROEs: Vec<f32> = self.application_requests.iter()
+            .map(|app| {
+                self.ERU.ROE(app.params.clone()).unwrap()
+            }).collect();
+        let CSSs: Vec<f32> = self.available_fcns.iter()
             .map(|fcn| {
                 self.CSU.CSS(fcn.params.clone()).unwrap()
             }).collect();
 
+        for i in ROEs {println!("{:?}", i);}
         for i in CSSs {println!("{:?}", i);}
 
-        Ok(ROE)
+        Ok(())
     }
 }
 
@@ -183,8 +181,6 @@ impl ERU {
                 return Err(String::from("All required parameters were not supplied."));
             }
         }
-        // println!("Param values before normalization: ");
-        // dbg!(&self.parameters);
         // normalize parameters
         for (i, param) in self.parameters.iter_mut().enumerate() {
             if let Some(ref mut raw_param) = param {
@@ -192,8 +188,6 @@ impl ERU {
                     / (Constants::ERU::ROE_PARAM_TEMPLATES[i].max - Constants::ERU::ROE_PARAM_TEMPLATES[i].min) - 1.0;
             }
         }
-        // println!("Param values after normalization: ");
-        // dbg!(&self.parameters);
 
         // 1. calculate membership function for each value of each parameter
         let membership_values = self.get_membership_values();
@@ -267,8 +261,6 @@ impl CSU {
                 return Err(String::from("All required parameters were not supplied."));
             }
         }
-        // println!("Param values before normalization: ");
-        // dbg!(&self.parameters);
         // normalize parameters
         for (i, param) in self.parameters.iter_mut().enumerate() {
             if let Some(ref mut raw_param) = param {
@@ -276,8 +268,6 @@ impl CSU {
                     / (Constants::CSU::CSS_PARAM_TEMPLATES[i].max - Constants::CSU::CSS_PARAM_TEMPLATES[i].min) - 1.0;
             }
         }
-        // println!("Param values after normalization: ");
-        // dbg!(&self.parameters);
 
         // 1. calculate membership function for each value of each parameter
         let membership_values = self.get_membership_values();
