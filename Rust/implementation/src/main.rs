@@ -1,12 +1,6 @@
-use FogNetwork::{Instance::*, Nodes::{FGN, AvailableFCN, StatusMetricParameter}};
-use User::{Application, ExpectationMetricParameter};
-
-#[allow(non_snake_case)]
-mod FogNetwork;
-#[allow(non_snake_case)]
-mod User;
-#[allow(non_snake_case)]
-mod Constants;
+use implementation::FogNetwork::{Instance::*, Nodes::{FGN, AvailableFCN, StatusMetricParameter}};
+use implementation::User::{Application, ExpectationMetricParameter};
+use implementation::Constants;
 
 fn main() -> Result<(), String> {
     let mut new_instance = Instance::new_empty(
@@ -199,8 +193,101 @@ fn main() -> Result<(), String> {
         },
     );
 
-    let mapping = test_fgn.application_placement().unwrap();
-    println!("{}", mapping);
+    let _ = test_fgn.application_placement();
+    let _ = test_fgn.application_placement_with_lookup();
+
+    // for _ in 0..100_000 {
+    //     let _ = test_fgn.application_placement();
+    // }
+    // println!("{}", mapping);
+
+    // // ERU
+    // println!("[");
+    // for i in 2..=10 {
+    //     println!("    [");
+    //     for j in 1..=8 {
+    //         print!("        [");
+    //         for k in (30..=120).step_by(10) {
+    //             let mut i = i as f32;
+    //             let mut j = j as f32;
+    //             let mut k = k as f32;
+    //             i = 2.0 * (i - Constants::ERU::ROE_PARAM_TEMPLATES[0].min)
+    //                 / (Constants::ERU::ROE_PARAM_TEMPLATES[0].max - Constants::ERU::ROE_PARAM_TEMPLATES[0].min) -1.0;
+    //             j = 2.0 * (j - Constants::ERU::ROE_PARAM_TEMPLATES[1].min)
+    //                 / (Constants::ERU::ROE_PARAM_TEMPLATES[1].max - Constants::ERU::ROE_PARAM_TEMPLATES[1].min) -1.0;
+    //             k = 2.0 * (k - Constants::ERU::ROE_PARAM_TEMPLATES[2].min)
+    //                 / (Constants::ERU::ROE_PARAM_TEMPLATES[2].max - Constants::ERU::ROE_PARAM_TEMPLATES[2].min) -1.0;
+    //
+    //             // dbg!(i, j, k);
+    //             let a = Constants::ERU::ProcessingTimeMembershipFunction(i);
+    //             let b = Constants::ERU::AccessRateMembershipFunction(j);
+    //             let c = Constants::ERU::RequiredResourcesMembershipFunction(k);
+    //
+    //             let mut ROE_numerator: f32 = 0.0;
+    //             let mut ROE_denominator: f32 = 0.0;
+    //
+    //             for p in 0..3 {
+    //                 for q in 0..3 {
+    //                     for r in 0..3 {
+    //                         let u = f32::max(a[p], f32::max(b[q], c[r]));
+    //
+    //                         ROE_numerator += u
+    //                         * Constants::ERU::ROE_SINGLETON_VALUES[Constants::ERU::ROE_FUZZY_RULES[r][p][q]];
+    //                         ROE_denominator += u;
+    //                     }
+    //                 }
+    //             }
+    //             print!("{:.2}, ", ROE_numerator / ROE_denominator);
+    //         }
+    //         println!("],");
+    //     }
+    //     println!("    ],");
+    // }
+    // println!("],");
+
+    // // CSU
+    // println!("[");
+    // for i in (100..=600).step_by(100) {
+    //     println!("    [");
+    //     for j in 1..=10 {
+    //         print!("        [");
+    //         for k in (10..=70).step_by(10) {
+    //             let mut i = i as f32;
+    //             let mut j = j as f32;
+    //             let mut k = k as f32;
+    //             i = 2.0 * (i - Constants::CSU::CSS_PARAM_TEMPLATES[0].min)
+    //                 / (Constants::CSU::CSS_PARAM_TEMPLATES[0].max - Constants::CSU::CSS_PARAM_TEMPLATES[0].min) -1.0;
+    //             j = 2.0 * (j - Constants::CSU::CSS_PARAM_TEMPLATES[1].min)
+    //                 / (Constants::CSU::CSS_PARAM_TEMPLATES[1].max - Constants::CSU::CSS_PARAM_TEMPLATES[1].min) -1.0;
+    //             k = 2.0 * (k - Constants::CSU::CSS_PARAM_TEMPLATES[2].min)
+    //                 / (Constants::CSU::CSS_PARAM_TEMPLATES[2].max - Constants::CSU::CSS_PARAM_TEMPLATES[2].min) -1.0;
+    //
+    //             // dbg!(i, j, k);
+    //             let a = Constants::CSU::RoundTripTimeMembershipFunction(i);
+    //             let b = Constants::CSU::ResourceAvailablityMembershipFunction(j);
+    //             let c = Constants::CSU::ProcessingSpeedMembershipFunction(k);
+    //
+    //             let mut CSS_numerator: f32 = 0.0;
+    //             let mut CSS_denominator: f32 = 0.0;
+    //
+    //             for p in 0..3 {
+    //                 for q in 0..3 {
+    //                     for r in 0..3 {
+    //                         let u = f32::min(a[p], f32::min(b[q], c[r]));
+    //
+    //                         CSS_numerator += u
+    //                         * Constants::CSU::CSS_SINGLETON_VALUES[Constants::CSU::CSS_FUZZY_RULES[r][p][q]];
+    //                         CSS_denominator += u;
+    //                     }
+    //                 }
+    //             }
+    //             print!("{:.2}, ", CSS_numerator / CSS_denominator);
+    //         }
+    //         println!("],");
+    //     }
+    //     println!("    ],");
+    // }
+    // println!("],");
 
     Ok(())
 }

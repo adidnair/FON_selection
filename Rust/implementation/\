@@ -1,0 +1,79 @@
+use criterion::{black_box, criterion_group, criterion_main, Criterion, Throughput, BenchmarkId};
+
+fn criterion_benchmark(c: &mut Criterion) {
+    use implementation::FogNetwork::{Instance::*, Nodes::{FGN, AvailableFCN, StatusMetricParameter}};
+    use implementation::User::{Application, ExpectationMetricParameter};
+    use implementation::Constants;
+
+    let mut new_instance = black_box(Instance::new_empty(
+        vec![
+           Parameter::new(
+                String::from("RoundTripTime"),
+                1.0f32,
+                false,
+            ),
+            Parameter::new(
+                String::from("ResourceAvailability"),
+                1.0f32,
+                true,
+            ),
+            Parameter::new(
+                String::from("ProcessingSpeed"),
+                1.0f32,
+                true,
+            ),
+        ],
+    ));
+
+    // let test_fgn = black_box(new_instance.get_FGN(String::from("Test_FGN_2")).unwrap());
+    // new_instance.add_FGN(
+    //     FGN::new(String::from("Test_FGN_1"))
+    // );
+
+    for n in (3..30).step_by(2) {
+        let mut fgn = &mut black_box(FGN::new(String::from(n.to_string())));
+        for i in 0..n {
+            black_box(Application::new(
+                i.to_string(),
+                vec![
+                    ExpectationMetricParameter::new(
+                        Constants::Application::ExpectationMetricParameterType::AccessRate, 5.0),
+                    ExpectationMetricParameter::new(
+                        Constants::Application::ExpectationMetricParameterType::RequiredResources, 5.0),
+                    ExpectationMetricParameter::new(
+                        Constants::Application::ExpectationMetricParameterType::ProcessingTime, 70.0),
+                ],
+            ).send_placement_request(fgn));
+
+            let _ = black_box(fgn.add_available_fcn(
+                AvailableFCN {
+                    id: i.to_string(),
+                    params: vec![
+                        StatusMetricParameter::new(
+                            Constants::FCN::StatusMetricParameterType::RoundTripTime , 100.0),
+                        StatusMetricParameter::new(
+                            Constants::FCN::StatusMetricParameterType::ResourceAvailability , 3.0),
+                        StatusMetricParameter::new(
+                            Constants::FCN::StatusMetricParameterType::ProcessingSpeed , 20.0),
+                    ]
+                }
+            ));
+        }
+
+        let fgn = &fgn;
+
+        new_instance.add_FGN(*fgn);
+    }
+
+    let mut group = c.benchmark_group("time_complexity");
+    // group.significance_level(0.1).sample_size(500);
+    for n in (3..30).step_by(2) {
+        group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, &n| {
+            b.iter(|| black_box(new_instance.get_FGN(n.to_string()).unwrap()).application_placement())
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(benches, criterion_benchmark);
+criterion_main!(benches);

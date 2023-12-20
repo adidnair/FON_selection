@@ -4,7 +4,7 @@ use crate::User::ExpectationMetricParameter;
 
 const NONE_APP_PARAM_WORKAROUND: Option<ExpectationMetricParameter> = None;
 const NONE_STAT_PARAM_WORKAROUND: Option<StatusMetricParameter> = None;
-const VEC_ARRAY_WORKAROUND: Vec<usize> = Vec::new();
+// const VEC_ARRAY_WORKAROUND: Vec<usize> = Vec::new();
 
 // Structure of property of FGN
 pub struct FGNProperty {
@@ -169,6 +169,51 @@ impl FGN {
             String::from("Mapping: \n") + &mappings
         ))
     }
+
+    pub fn application_placement_with_lookup(&mut self) -> Result<String, String> {
+        if self.application_requests.len() >= self.available_fcns.len() {
+            return Err(String::from("Not enough FCNs to map applications to."));
+        }
+
+        let mut ROEs: Vec<f32> = self.application_requests.iter()
+            .map(|app| {
+                self.ERU.ROE_lookup(app.params.clone()).unwrap()
+            }).collect();
+        let mut CSSs: Vec<f32> = self.available_fcns.iter()
+            .map(|fcn| {
+                self.CSU.CSS_lookup(fcn.params.clone()).unwrap()
+            }).collect();
+
+        let mut ROE_indices: Vec<usize> = (0..ROEs.len()).collect();
+        let mut CSS_indices: Vec<usize> = (0..CSSs.len()).collect();
+
+        for i in 0..ROE_indices.len() {
+            let mut j = i;
+            while j > 0 && ROEs[j-1] < ROEs[j] {
+                ROEs.swap(j, j-1);
+                ROE_indices.swap(j, j-1);
+                j -= 1;
+            }
+        }
+
+        for i in 0..CSS_indices.len() {
+            let mut j = i;
+            while j > 0 && CSSs[j-1] < CSSs[j] {
+                CSSs.swap(j, j-1);
+                CSS_indices.swap(j, j-1);
+                j -= 1;
+            }
+        }
+
+        let mappings = ROE_indices.iter().enumerate().map(|(i, &roe)| {
+            self.application_requests[roe].id.clone() + &String::from(" - ")
+                + &self.available_fcns[CSS_indices[i]].id
+        }).collect::<Vec<String>>().join("\n");
+
+        Ok(String::from(
+            String::from("Mapping: \n") + &mappings
+        ))
+    }
 }
 
 impl ERU {
@@ -241,6 +286,69 @@ impl ERU {
 
         Ok(ROE_numerator / ROE_denominator)
     }
+
+    pub fn ROE_lookup(&mut self, expectation_params: Vec<ExpectationMetricParameter>) -> Result<f32, String> {
+        // filter parameters
+        for (i, param) in expectation_params.iter().enumerate() {
+            for expected_type in Constants::ERU::ROE_EXPECTED_PARAMS {
+                if param.param_type == expected_type {
+                    if param.val >= Constants::ERU::ROE_PARAM_TEMPLATES[i].min
+                    && param.val <= Constants::ERU::ROE_PARAM_TEMPLATES[i].max {
+                        self.parameters[i] = Some(param.clone());
+                    } else {
+                        println!("Value of parameter \"{} ({:?})\" is out of the bounds \
+                            defined by the Fog Network. Omitting...", param.param_type, param.val);
+                    }
+                    continue;
+                }
+            }
+        }
+
+        for param in &self.parameters {
+            if param.is_none() {
+                return Err(String::from("All required parameters were not supplied."));
+            }
+        }
+
+        Ok(Constants::ERU::ROE_LOOK_UP
+           [{
+               let val = self.parameters[0].as_ref().unwrap().val;
+               if val < 2.5 {0}
+               else if val < 3.5 {1}
+               else if val < 4.5 {2}
+               else if val < 5.5 {3}
+               else if val < 6.5 {4}
+               else if val < 7.5 {5}
+               else if val < 8.5 {6}
+               else if val < 9.5 {7}
+               else{8}
+           }]
+           [{
+               let val = self.parameters[1].as_ref().unwrap().val;
+               if val < 1.5 {0}
+               else if val < 2.5 {1}
+               else if val < 3.5 {2}
+               else if val < 4.5 {3}
+               else if val < 5.5 {4}
+               else if val < 6.5 {5}
+               else if val < 7.5 {6}
+               else{7}
+           }]
+           [{
+               let val = self.parameters[2].as_ref().unwrap().val;
+               if val < 35.0 {0}
+               else if val < 45.0 {1}
+               else if val < 55.0 {2}
+               else if val < 65.0 {3}
+               else if val < 75.0 {4}
+               else if val < 85.0 {5}
+               else if val < 95.0 {6}
+               else if val < 105.0 {7}
+               else if val < 115.0 {8}
+               else{9}
+           }]
+       )
+    }
 }
 
 impl CSU {
@@ -309,5 +417,64 @@ impl CSU {
         }
 
         Ok(CSS_numerator/CSS_denominator)
+    }
+
+    pub fn CSS_lookup(&mut self, status_params: Vec<StatusMetricParameter>) -> Result<f32, String> {
+        // filter parameters
+        for (i, param) in status_params.iter().enumerate() {
+            for expected_type in Constants::CSU::CSS_EXPECTED_PARAMS {
+                if param.param_type == expected_type {
+                    if param.val >= Constants::CSU::CSS_PARAM_TEMPLATES[i].min
+                    && param.val <= Constants::CSU::CSS_PARAM_TEMPLATES[i].max {
+                        self.parameters[i] = Some(param.clone());
+                    } else {
+                        println!("Value of parameter \"{}\" is out of the bounds \
+                            defined by the Fog Network. Omitting...", param.param_type);
+                    }
+                    continue;
+                }
+            }
+        }
+
+        for param in &self.parameters {
+            if param.is_none() {
+                return Err(String::from("All required parameters were not supplied."));
+            }
+        }
+
+        Ok(Constants::CSU::CSS_LOOK_UP
+           [{
+               let val = self.parameters[0].as_ref().unwrap().val;
+               if val < 150.0 {0}
+               else if val < 250.0 {1}
+               else if val < 350.0 {2}
+               else if val < 450.0 {3}
+               else if val < 550.0 {4}
+               else {6}
+           }]
+           [{
+               let val = self.parameters[1].as_ref().unwrap().val;
+               if val < 1.5 {0}
+               else if val < 2.5 {1}
+               else if val < 3.5 {2}
+               else if val < 4.5 {3}
+               else if val < 5.5 {4}
+               else if val < 6.5 {5}
+               else if val < 7.5 {6}
+               else if val < 8.5 {7}
+               else if val < 9.5 {8}
+               else {9}
+           }]
+           [{
+               let val = self.parameters[2].as_ref().unwrap().val;
+               if val < 15.0 {0}
+               else if val < 25.0 {1}
+               else if val < 35.0 {2}
+               else if val < 45.0 {3}
+               else if val < 55.0 {4}
+               else if val < 65.0 {5}
+               else {6}
+           }]
+       )
     }
 }
